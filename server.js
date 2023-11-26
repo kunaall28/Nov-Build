@@ -1,97 +1,40 @@
-const http = require("http");
+const express = require("express");
+
+const app = express();
+app.use(express.json());
 
 const port = 8081;  //local port no.
 
-// HTTP Methods
-/*
->> GET: Inorder to get data from server
->> POST: Inorder to push/transferring the data to the server
->> DELETE: to Delete the data from database
->> PATCH: Updating certain fields(minimal changes)
->> PUT: full update(completely)
-*/
-
 const toDoList = ["learn","apply things","succeed"];
 
-http
-    .createServer((req, res) => { //call back func
-        const {method, url} = req;
+//http://127.0.0.1:8081/todos
+app.get("/todos",(req, res) => {
+    // res.writehead(200)
+    // res.write(toDoList)
+    res.status(200).send(toDoList);
+});
 
-        // console.log(method, url);
+app.post("/todos",(req, res) => {
+    let newToDoItem = req.body.name;
+    toDoList.push(newToDoItem);
+    res.status(200).send({message: "Task Added Successfully"});
+});
 
-        if(url === "/todos"){
-            if(method === "GET"){
-                res.writeHead(200,{ "Content-Type": "text/html"});
-                res.write(toDoList.toString());
-            }else if(method === "POST"){
-                let body = "";
-                req
-                .on('error',(err) =>{
-                    console.log(err);
-                })
-                .on('data',(chunk)=>{
-                    body += chunk;
-                    // console.log(chunk);
-                })
-                .on('end',()=>{
-                    body =JSON.parse(body);
+app.delete("/todos",(req,res) => {
+    const deleteThisItem = req.body.name;
 
-                    let newToDo = toDoList;
-                    newToDo.push(body.item);
-                    console.log(newToDo);
-                    // console.log("data: ",body)
-                })
-            }else if(method === "DELETE"){
-                let body = '';
-                req.on('error',(err) => {
-                    console.error(err);
-                }).on('data', (chunk) => {
-                    body += chunk;
-                }).on('end', () => {
-                    body = JSON.parse(body);
-
-                    let deleteThisItem = body.item;
-
-                    for(let i=0;i<toDoList.length;i++){
-                        if(toDoList[i] === deleteThisItem){
-                           toDoList.splice(i, 1);
-                            break;
-                        }else{
-                            console.error("Error: Match Not Found");
-                            break;
-                        }
-                    }
-
-                    // FIND METHOD
-                    // toDoList.find((elem,index)=> {
-                    //     if(elem === deleteThisItem){
-                    //         toDoList.splice(index, 1);
-                    //     }else{
-                    //         console.error("Error: Match Not Found");
-                    //     }
-                    // });
-                });
-            }
-            else{
-                res.writeHead(501);
-            }
-        }else{
-            res.writeHead(404);
+    toDoList.find((elem, index) => {
+        if (elem === deleteThisItem){
+            toDoList.splice(index, 1);
         }
-        res.end()
-        // res.writeHead(200, { "Content-Type": "text/html"});
-        // res.write("<h2>Hey Server Started and you can proceed </h2>");
-        // res.end();
-    })
-    .listen(port, () => { //call back func
-        console.log(`NodeJS Server started running on Port ${port}`);
+        res.status(202).send({"message": `Deleted Item ${req.body.name}`});
     });
+});
 
+app.all("*", (req,res) => {
+    res.status(501).send();
+});
 
-//http://localhost:8081/signin
-//http://localhost:8081/signup
-//http://localhost:8081/home
-//http://localhost:8081/contact
-//http://localhost:8081/about us
-// here we can see the root of each address or link
-
+app.listen(port, ()=>{
+    console.log(`NodeJS Server Started Running on Port ${port}`)
+})
